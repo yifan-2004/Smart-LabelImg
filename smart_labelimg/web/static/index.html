@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Smart Label</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand" aria-label="Smart Label">
+          <span class="brand-mark" aria-hidden="true"><i></i></span>
+          <span>Smart Label</span>
+          <span class="local-badge">LOCAL</span>
+        </div>
+
+        <form id="dataset-form" class="path-form" autocomplete="off">
+          <label class="sr-only" for="dataset-path">数据集路径</label>
+          <input id="dataset-path" type="text" placeholder="输入本地数据集文件夹路径" spellcheck="false" />
+          <button id="open-dataset" class="button primary" type="submit">打开数据集</button>
+        </form>
+
+        <div class="toolbar-group">
+          <label class="select-wrap">
+            <span>保存格式</span>
+            <select id="annotation-format" aria-label="保存格式">
+              <option value="yolo">YOLO TXT</option>
+              <option value="voc_xml">Pascal VOC XML</option>
+            </select>
+          </label>
+          <button id="undo-button" class="icon-button" type="button" title="撤销 (Ctrl/Cmd+Z)" aria-label="撤销" disabled>↶</button>
+          <button id="redo-button" class="icon-button" type="button" title="重做 (Ctrl/Cmd+Shift+Z)" aria-label="重做" disabled>↷</button>
+          <button id="save-button" class="button" type="button">保存 <kbd>⌘S</kbd></button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="sidebar image-sidebar">
+          <div class="panel-heading">
+            <div>
+              <h2>图片</h2>
+              <p id="image-count">尚未打开数据集</p>
+            </div>
+            <span id="save-state" class="save-state">就绪</span>
+          </div>
+          <div class="image-filter">
+            <input id="image-search" type="search" placeholder="搜索图片" aria-label="搜索图片" />
+          </div>
+          <ol id="image-list" class="image-list" aria-label="数据集图片"></ol>
+          <div class="sidebar-footer">
+            <span id="dataset-name">本地数据不会上传</span>
+          </div>
+        </aside>
+
+        <section class="editor" aria-label="标注画布">
+          <div class="editor-toolbar">
+            <div class="segmented" role="group" aria-label="标注模式">
+              <button id="manual-mode" class="segment active" type="button" aria-pressed="true">矩形框 <kbd>W</kbd></button>
+              <button id="smart-mode" class="segment" type="button" aria-pressed="false">MobileSAM <kbd>S</kbd></button>
+            </div>
+            <span id="mode-hint" class="mode-hint">拖动画框；点击框可选择、移动或缩放</span>
+            <div class="zoom-controls">
+              <button id="zoom-out" class="icon-button" type="button" aria-label="缩小">−</button>
+              <button id="fit-button" class="zoom-value" type="button" title="适应窗口 (Ctrl/Cmd+0)">适应</button>
+              <button id="zoom-in" class="icon-button" type="button" aria-label="放大">＋</button>
+            </div>
+          </div>
+
+          <div id="canvas-stage" class="canvas-stage" tabindex="0">
+            <canvas id="annotation-canvas" aria-label="图片标注画布"></canvas>
+            <div id="empty-state" class="empty-state">
+              <div class="empty-icon" aria-hidden="true">⌗</div>
+              <h1>打开一个数据集开始标注</h1>
+              <p>输入图片文件夹路径。图片和标注只在这台电脑上处理。</p>
+            </div>
+            <div id="loading-overlay" class="loading-overlay" hidden>
+              <span class="spinner"></span><span>处理中…</span>
+            </div>
+          </div>
+
+          <footer class="navigation-bar">
+            <div class="nav-group">
+              <button id="previous-button" class="button" type="button" disabled>← 上一张 <kbd>A</kbd></button>
+              <button id="next-button" class="button" type="button" disabled>下一张 <kbd>D</kbd> →</button>
+            </div>
+            <div id="image-position" class="image-position">0 / 0</div>
+            <div class="nav-group">
+              <button id="copy-previous-button" class="button" type="button" disabled>复制上一张 <kbd>⌘V</kbd></button>
+              <button id="smart-next-button" class="button accent" type="button" disabled>智能下一张 <kbd>⇧D</kbd></button>
+            </div>
+          </footer>
+        </section>
+
+        <aside class="sidebar label-sidebar">
+          <div class="panel-heading">
+            <div>
+              <h2>类别与标注</h2>
+              <p id="box-count">0 个框</p>
+            </div>
+          </div>
+          <form id="add-label-form" class="add-label-form" autocomplete="off">
+            <input id="new-label" type="text" placeholder="添加类别" aria-label="新类别名称" />
+            <button class="icon-button add-button" type="submit" title="添加类别" aria-label="添加类别">＋</button>
+          </form>
+          <div class="section-label">类别</div>
+          <ul id="label-list" class="label-list"></ul>
+          <div class="section-label annotation-heading">当前图片</div>
+          <ul id="box-list" class="box-list"></ul>
+          <div class="shortcut-card">
+            <strong>快速操作</strong>
+            <dl>
+              <div><dt>全选框</dt><dd>⌘A</dd></div>
+              <div><dt>删除框</dt><dd>Delete</dd></div>
+              <div><dt>上一张 / 下一张</dt><dd>A / D</dd></div>
+              <div><dt>智能下一张</dt><dd>⇧D</dd></div>
+            </dl>
+          </div>
+        </aside>
+      </main>
+
+      <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    </div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

@@ -4,6 +4,7 @@ Set-Location $PSScriptRoot
 if (-not (Test-Path .\.venv\Scripts\python.exe)) {
   Write-Host "Virtual environment not found. Running setup first..."
   & .\setup.ps1
+  if ($LASTEXITCODE -ne 0) { throw "Setup failed with exit code $LASTEXITCODE." }
 }
 
 if (-not (Test-Path .\models\mobile_sam.pt)) {
@@ -11,3 +12,4 @@ if (-not (Test-Path .\models\mobile_sam.pt)) {
 }
 
 & .\.venv\Scripts\python.exe -m smart_labelimg.app
+if ($LASTEXITCODE -ne 0) { throw "Smart LabelImg exited with code $LASTEXITCODE." }

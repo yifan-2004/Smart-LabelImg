@@ -10,9 +10,11 @@ mobile_sam_checkpoint = root / "models" / "mobile_sam.pt"
 if not mobile_sam_checkpoint.exists():
     raise SystemExit("models/mobile_sam.pt is required for the macOS release build")
 datas.append((str(mobile_sam_checkpoint), "models"))
-app_icon = root / "assets" / "AppIcon.icns"
-if not app_icon.exists():
-    raise SystemExit("assets/AppIcon.icns is required for the macOS release build")
+app_icon = None
+if sys.platform == "darwin":
+    app_icon = root / "assets" / "AppIcon.icns"
+    if not app_icon.exists():
+        raise SystemExit("assets/AppIcon.icns is required for the macOS release build")
 
 
 a = Analysis(
@@ -61,7 +63,7 @@ exe = EXE(
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch="arm64",
+    target_arch="arm64" if sys.platform == "darwin" else None,
     codesign_identity=None,
     entitlements_file=None,
 )

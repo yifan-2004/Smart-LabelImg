@@ -4,6 +4,27 @@ Smart LabelImg is a modern LabelImg-style annotation tool with YOLO TXT, Pascal 
 and local AI-assisted boxes.
 The main workflow is MobileSAM-assisted: draw around an object and MobileSAM tightens the box.
 
+## 推荐：本地 Web 版
+
+本地 Web 版不需要安装 `.app` 或 `.exe`。浏览器只负责界面，图片保存与 MobileSAM 推理全部在本机 Python 中完成，数据不会上传互联网。
+
+macOS：
+
+```bash
+./setup_web.sh
+./run_web.sh
+```
+
+Windows：
+
+```powershell
+.\setup_web.ps1
+.\run_web.ps1
+```
+
+浏览器会自动打开 `http://127.0.0.1:7860`。完整说明见
+[`docs/local-web.md`](docs/local-web.md)。
+
 ## 下载 macOS App
 
 适用于 Apple Silicon Mac：M1 / M2 / M3 / M4。
@@ -28,8 +49,22 @@ open "Smart LabelImg.app"
 
 注意：不要下载 GitHub 的 `Source code`，源码包里没有 `.app`。
 
-Smart box refinement runs directly through the bundled MobileSAM model. There is no
-separate crop-size tuning control in the simplified app.
+智能框选由内置 MobileSAM 模型在本地完成。
+
+## Windows 源码开发
+
+Windows 10/11 x64 请安装 Python 3.11 和 Git，在项目根目录打开 PowerShell：
+
+```powershell
+.\setup.ps1
+.\run.ps1
+.\.venv\Scripts\python.exe -m pytest -q
+.\build_app.ps1
+```
+
+生成的程序位于 `dist\Smart LabelImg\Smart LabelImg.exe`，发布包位于
+`release\Smart-LabelImg-MobileSAM-Windows-x64.zip`。完整开发、执行策略与可选参数说明见
+[`docs/windows-install-build.md`](docs/windows-install-build.md)。
 
 ## 快速使用
 

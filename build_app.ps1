@@ -12,6 +12,7 @@ if (-not (Test-Path .\models\mobile_sam.pt)) {
 
 if (-not $SkipInstall) {
   & .\setup.ps1 -Build
+  if ($LASTEXITCODE -ne 0) { throw "Setup failed with exit code $LASTEXITCODE." }
 }
 
 $venvPython = ".\.venv\Scripts\python.exe"
@@ -20,6 +21,7 @@ if (-not (Test-Path $venvPython)) {
 }
 
 & $venvPython -m PyInstaller --clean --noconfirm smart-labelimg.spec
+if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE." }
 
 $exePath = "dist\Smart LabelImg\Smart LabelImg.exe"
 if (-not (Test-Path $exePath)) {
