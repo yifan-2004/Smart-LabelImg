@@ -54,6 +54,6 @@ Use `Cmd` on macOS or `Ctrl` elsewhere for the modifier below.
 
 See [setup, troubleshooting, and validation](docs/local-web.md) for details. This is a single-user local application; do not expose the server publicly.
 
-## License and credits
+## License
 
-Original application code: [MIT](LICENSE). Inspired by [LabelImg](https://github.com/HumanSignal/labelImg); smart refinement uses [MobileSAM](https://github.com/ChaoningZhang/MobileSAM). Existing project history is retained. Dependencies and model licensing are documented in [third-party notices](THIRD_PARTY_NOTICES.md).
+[MIT](LICENSE) · [LabelImg](https://github.com/HumanSignal/labelImg) · [MobileSAM](https://github.com/ChaoningZhang/MobileSAM) · [Third-party notices](THIRD_PARTY_NOTICES.md)
