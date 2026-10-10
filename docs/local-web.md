@@ -1,64 +1,57 @@
-# Smart Label 本地 Web 版
+# Local web guide
 
-本地 Web 版使用浏览器作为界面，Python 在本机完成 MobileSAM 推理和 YOLO/VOC 文件读写。图片、模型和标注不会上传到互联网，服务只监听 `127.0.0.1`。
+## Install and launch
 
-## macOS
+Use Python 3.11 or newer for manual annotation. Python 3.11 is the tested AI configuration. Setup creates an isolated `.venv-web` environment in the project folder; it does not install a desktop application.
 
-安装 Python 3.11 和 Git，然后在项目目录运行：
+| System | Setup | Start |
+|---|---|---|
+| macOS / Linux | `./setup_web.sh` | `./run_web.sh` |
+| Windows PowerShell | `.\setup_web.ps1` | `.\run_web.ps1` |
+| Windows batch | `setup_web.bat` | `run_web.bat` |
 
-```bash
-./setup_web.sh
-./run_web.sh
-```
+Install AI dependencies with `./setup_web.sh --ai` or `.\setup_web.ps1 -AI`. They include PyTorch, torchvision, timm, and MobileSAM from a pinned upstream commit. The repository includes the original MobileSAM checkpoint. Manual annotation does not load it.
 
-直接打开某个数据集：
-
-```bash
-./run_web.sh "/Users/your-name/datasets/vehicles"
-```
-
-## Windows 10/11
-
-安装 Python 3.11 x64 和 Git for Windows。在项目目录打开 PowerShell：
-
-```powershell
-.\setup_web.ps1
-.\run_web.ps1
-```
-
-直接打开某个数据集：
-
-```powershell
-.\run_web.ps1 -Dataset "D:\datasets\vehicles"
-```
-
-如果 PowerShell 阻止脚本，可直接使用：
-
-```bat
-setup_web.bat
-run_web.bat
-```
-
-启动后浏览器会自动打开 `http://127.0.0.1:7860`。关闭运行脚本的终端即可停止服务。
-
-## 数据集和保存
-
-- 数据集目录中放置 JPG、JPEG、PNG、BMP、WEBP 或 TIFF 图片。
-- YOLO 模式在图片旁保存同名 `.txt`，并维护 `classes.txt`。
-- Pascal VOC 模式在图片旁保存同名 `.xml`。
-- 每次保存都由本机 Python 直接写入数据集目录，规则与桌面版保持一致。
-- `models/mobile_sam.pt` 必须保留；智能框选第一次使用时会加载模型。
-
-## 开发
-
-后端入口为 `smart_labelimg/web_service.py`，浏览器界面位于 `smart_labelimg/web/static/`。运行测试：
+To open the demo immediately:
 
 ```bash
-.venv-web/bin/python -m pytest -q
+./run_web.sh examples/web-demo
 ```
 
-Windows：
+For another port or to suppress automatic browser opening:
 
-```powershell
-.\.venv-web\Scripts\python.exe -m pytest -q
+```bash
+.venv-web/bin/python -m smart_labelimg.web_app --port 7861 --no-browser
 ```
+
+On Windows, replace `.venv-web/bin/python` with `.\.venv-web\Scripts\python.exe`. Stop with `Ctrl+C`.
+
+## Data and annotation
+
+Enter a folder path on the computer running Python. Relative paths resolve from the project directory when launched with the supplied scripts. Supported images: JPG, JPEG, PNG, BMP, WEBP, TIF, and TIFF. Subdirectories are scanned recursively.
+
+YOLO saves same-stem `.txt` files and `classes.txt`; VOC saves same-stem `.xml` files. Use a consistent class order and save format within each dataset. Copy or back up existing datasets before editing: changes are automatically written to disk after a short delay. The saved/error indicator reflects write status. In-memory undo history is per image and resets when navigating or reloading.
+
+MobileSAM refines geometry; it does not infer class names. Choose the class yourself and review each result. If inference fails, the interface reports the failure and retains the rough box for manual adjustment. Smart next is intended for nearby sequential frames, preserves existing target boxes, and requires explicit acceptance of low-confidence candidates. An accepted proposal is not verified ground truth.
+
+This application serves one shared dataset session to a single local user. Keep one active editing tab. The server listens on `127.0.0.1`, rejects foreign origins/hosts, and serves only bundled frontend assets. It does not upload images, call hosted models, or provide collaboration/accounts. Do not publish its port through a tunnel or deploy it as a public service.
+
+## Troubleshooting
+
+- **Python missing:** install Python, reopen the terminal, and rerun setup. On macOS/Linux, `PYTHON_BIN=python3.12 ./setup_web.sh` selects an interpreter explicitly.
+- **Scripts cannot execute:** run `bash setup_web.sh` and `bash run_web.sh`. On Windows use the included `.bat` launchers if PowerShell policy blocks scripts.
+- **Port in use:** choose another port as shown above.
+- **MobileSAM unavailable:** install AI dependencies in the same `.venv-web`, retain `models/mobile_sam.pt`, and read the displayed error. Manual mode remains available.
+- **Save failed:** check folder permissions and available space. Stay on the image and save again; failed saves prevent normal navigation from discarding edits.
+
+## Development and validation
+
+```bash
+.venv-web/bin/python -m pip install -r requirements-web-dev.txt
+.venv-web/bin/python -m pytest -q tests/test_web_service.py tests/test_web_launcher.py tests/test_web_static.py tests/test_annotation_io.py tests/test_ai_backend.py tests/test_propagation.py tests/test_local_web_package.py
+node --test tests/frontend/workflow.test.cjs
+```
+
+Node 20+ is needed only for frontend development tests. Runtime has no Node or frontend build requirement. Legacy desktop tests additionally require PySide6 and are outside the web package.
+
+The browser workflow was checked on macOS: manual drawing, real MobileSAM refinement, YOLO/VOC saving, persistence after reload, navigation, copying previous boxes, undo/redo, and smart propagation. Automated checks cover annotation I/O, session changes, transactional saves, path boundaries, foreign origins, and mixed propagation results. Windows launch scripts are provided but have not been executed on Windows. Synthetic demo scenes illustrate usage, not accuracy or speed benchmarks.

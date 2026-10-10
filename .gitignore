@@ -28,3 +28,6 @@ vendor/
 
 # Local generated verification artifacts
 *.log
+
+# Local browser runtime
+.venv-web/

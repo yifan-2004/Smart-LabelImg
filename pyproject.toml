@@ -1,7 +1,7 @@
 [project]
 name = "smart-labelimg"
-version = "0.1.0"
-description = "LabelImg-style YOLO annotator with smart box suggestions"
+version = "0.2.0"
+description = "Local browser annotation with YOLO, Pascal VOC, and MobileSAM"
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]

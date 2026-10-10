@@ -1,24 +1,12 @@
-# Third Party Notices
+# Third-party notices
 
-Smart LabelImg packages open-source Python and model components for the GitHub
-macOS release. Review upstream licenses before redistributing modified builds.
+The MIT license covers original Smart LabelImg application code and documentation. It does not replace licenses of dependencies, pretrained models, or third-party images.
 
-## Runtime
+- **MobileSAM:** [ChaoningZhang/MobileSAM](https://github.com/ChaoningZhang/MobileSAM), Apache-2.0. The unmodified `models/mobile_sam.pt` checkpoint is included for local inference. A copy of its upstream license is in [licenses/MobileSAM-Apache-2.0.txt](licenses/MobileSAM-Apache-2.0.txt). AI dependencies are installed separately.
+- **LabelImg:** [HumanSignal/labelImg](https://github.com/HumanSignal/labelImg), MIT. Its annotation workflow and YOLO/Pascal VOC interoperability inspired this project. The upstream copyright/license notice is preserved in [licenses/LabelImg-MIT.txt](licenses/LabelImg-MIT.txt).
+- **Web runtime:** Python, FastAPI, Starlette, Uvicorn, NumPy, Pillow, and OpenCV retain their respective licenses; installed package distributions provide their licensing materials.
+- **Optional inference:** PyTorch, torchvision, timm, and MobileSAM retain their upstream licenses.
+- **Legacy desktop source:** PySide6/Qt and PyInstaller are used by historical desktop code. They are not dependencies of the web release and their binaries are not bundled in it.
+- **Examples:** `examples/web-demo/` and `examples/make_web_demo.py` are original synthetic illustrations covered by this repository's MIT license. Older example photographs retained in source history are not relicensed by this project and are excluded from the web release archive.
 
-- Python 3.11 runtime and standard library.
-- PySide6 / Qt for the desktop UI.
-- OpenCV and NumPy for image loading and local image processing.
-- PyTorch for MobileSAM inference on Apple Silicon where available.
-- PyInstaller for application bundling.
-
-## Model
-
-- MobileSAM checkpoint: `models/mobile_sam.pt`.
-- The release bundles this checkpoint so end users do not need a separate model
-  download.
-
-## Project Formats
-
-- YOLO detection TXT and Pascal VOC XML annotation formats are used for dataset
-  interoperability. YOLO class names are written to `classes.txt` next to YOLO
-  labels.
+The web release is source plus a model checkpoint, not a redistributed Python/Qt runtime. No university, company, or upstream project endorsement is implied.

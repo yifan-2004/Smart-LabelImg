@@ -12,6 +12,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from threading import Lock, RLock
 from typing import Literal
+from urllib.parse import urlsplit
 import xml.etree.ElementTree as ET
 from uuid import uuid4
 
@@ -19,6 +20,8 @@ import cv2
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from smart_labelimg.ai_backend import MobileSamBackend
@@ -107,9 +110,10 @@ class LocalDatasetService:
         try:
             images = sorted(
                 (
-                    candidate.resolve(strict=True)
+                    resolved
                     for candidate in root.rglob("*")
                     if candidate.is_file() and candidate.suffix.lower() in IMAGE_SUFFIXES
+                    if _is_within(resolved := candidate.resolve(strict=True), root)
                 ),
                 key=lambda candidate: candidate.relative_to(root).as_posix().casefold(),
             )
@@ -356,6 +360,15 @@ def create_app(initial_dataset: Path | None = None) -> FastAPI:
     """Create the local annotation API without binding a network interface."""
 
     app = FastAPI(title="Smart LabelImg Local Web", docs_url="/api/docs", redoc_url=None)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"])
+
+    @app.middleware("http")
+    async def require_local_origin(request, call_next):
+        origin = request.headers.get("origin")
+        if origin and urlsplit(origin).netloc != request.headers.get("host"):
+            return JSONResponse({"detail": "Cross-origin access is not allowed"}, status_code=403)
+        return await call_next(request)
+
     service = LocalDatasetService()
     app.state.web_service = service
 

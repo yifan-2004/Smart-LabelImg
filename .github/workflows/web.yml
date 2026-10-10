@@ -1,0 +1,21 @@
+name: Web annotation checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -r requirements-web-dev.txt
+      - run: python -m pytest -q tests/test_web_service.py tests/test_web_launcher.py tests/test_web_static.py tests/test_annotation_io.py tests/test_ai_backend.py tests/test_propagation.py tests/test_local_web_package.py
+      - run: node --test tests/frontend/workflow.test.cjs

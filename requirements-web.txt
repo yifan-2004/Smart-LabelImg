@@ -1,5 +1,5 @@
-fastapi>=0.115,<1
-uvicorn>=0.34,<1
+fastapi==0.127.1
+uvicorn>=0.34,<0.50
 Pillow>=10,<13
 numpy>=1.26,<3
 opencv-python-headless>=4.9,<5

@@ -184,6 +184,7 @@ async function loadImage(index, preservePrevious = true, allowBusy = false) {
     state.image = { ...data, width: data.width || image.naturalWidth, height: data.height || image.naturalHeight };
     state.imageCache = image;
     state.boxes = (data.boxes || []).map(normalizeBox);
+    state.images[index].annotated = state.boxes.length > 0;
     if (data.labels?.length) state.labels = data.labels;
     if (data.format) state.format = data.format;
     state.activeLabel = state.labels.includes(state.activeLabel) ? state.activeLabel : (state.labels[0] || "object");
@@ -236,6 +237,7 @@ async function navigate(delta) { await loadImage(state.currentIndex + delta); }
 
 async function copyPreviousBoxes() {
   if (state.currentIndex <= 0 || state.busy) return toast("当前图片没有上一张", true);
+  setBusy(true, "正在复制上一张标注…");
   try {
     const result = await api(API.previous(state.currentIndex));
     const boxes = (result.boxes || []).map(normalizeBox);
@@ -245,6 +247,7 @@ async function copyPreviousBoxes() {
     snapshot(); markDirty(); renderAll();
     toast(`已复制 ${state.boxes.length} 个框`);
   } catch (error) { toast(`复制上一张失败：${error.message}`, true); }
+  finally { setBusy(false); }
 }
 
 async function smartNext() {
@@ -259,15 +262,17 @@ async function smartNext() {
     const candidates = (result.candidates || []).map((item) => item.box || item);
     if (state.boxes.length && (propagated.length || candidates.length)) {
       toast("目标图片已有标注，已保留原框；可手动复制或调整", true);
-    } else if (propagated.length) {
-      state.boxes = propagated.map(normalizeBox);
-      state.selected = new Set(state.boxes.map((_, index) => index));
-      state.history = []; state.historyIndex = -1; snapshot(); markDirty(); renderAll();
-      toast(`已传播并微调 ${state.boxes.length} 个框`);
-    } else if (candidates.length) {
+    } else {
+      if (propagated.length) {
+        state.boxes = propagated.map(normalizeBox);
+        state.selected = new Set(state.boxes.map((_, index) => index));
+        snapshot(); markDirty();
+      }
       state.pendingCandidates = candidates.map(normalizeBox);
       renderAll();
-      toast(`有 ${candidates.length} 个低置信度候选框，按 Enter 接受`);
+      toast(candidates.length
+        ? `已传播 ${propagated.length} 个框；另有 ${candidates.length} 个候选框，按 Enter 接受`
+        : `已传播并微调 ${propagated.length} 个框`);
     }
   } catch (error) { toast(`智能下一张失败：${error.message}`, true); }
   finally { setBusy(false); }
@@ -282,6 +287,7 @@ async function loadImageWithoutBusy(index) {
   state.image = { ...data, width: data.width || image.naturalWidth, height: data.height || image.naturalHeight };
   state.imageCache = image;
   state.boxes = (data.boxes || []).map(normalizeBox);
+    state.images[index].annotated = state.boxes.length > 0;
   if (data.labels?.length) state.labels = data.labels;
   state.selected.clear(); state.history = []; state.historyIndex = -1; snapshot(); state.zoom = 1; markDirty(false);
   state.pendingCandidates = [];
@@ -496,6 +502,12 @@ function addLabel(name) {
   state.labels.push(label); state.activeLabel = label; snapshot(); markDirty(); renderAll();
 }
 
+function cancelPointer() {
+  if (state.pointer?.originals) state.boxes = state.pointer.originals;
+  state.pointer = null;
+  renderAll();
+}
+
 function setZoom(value) {
   state.zoom = Math.max(.2, Math.min(8, value)); calculateTransform(); drawCanvas();
 }
@@ -590,7 +602,7 @@ dom.undo.addEventListener("click", () => restoreHistory(state.historyIndex - 1))
 dom.save.addEventListener("click", () => saveAnnotations()); dom.previous.addEventListener("click", () => navigate(-1)); dom.next.addEventListener("click", () => navigate(1));
 dom.copyPrevious.addEventListener("click", copyPreviousBoxes); dom.smartNext.addEventListener("click", smartNext);
 dom.zoomOut.addEventListener("click", () => setZoom(state.zoom / 1.2)); dom.zoomIn.addEventListener("click", () => setZoom(state.zoom * 1.2)); dom.fit.addEventListener("click", () => setZoom(1));
-dom.canvas.addEventListener("pointerdown", onPointerDown); dom.canvas.addEventListener("pointermove", onPointerMove); dom.canvas.addEventListener("pointerup", onPointerUp); dom.canvas.addEventListener("pointercancel", onPointerUp);
+dom.canvas.addEventListener("pointerdown", onPointerDown); dom.canvas.addEventListener("pointermove", onPointerMove); dom.canvas.addEventListener("pointerup", onPointerUp); dom.canvas.addEventListener("pointercancel", cancelPointer);
 dom.canvas.addEventListener("wheel", (event) => { if (!event.ctrlKey && !event.metaKey) return; event.preventDefault(); setZoom(state.zoom * (event.deltaY < 0 ? 1.1 : .9)); }, { passive: false });
 document.addEventListener("keydown", handleShortcut);
 window.addEventListener("beforeunload", (event) => { if (state.dirty) { event.preventDefault(); event.returnValue = ""; } });

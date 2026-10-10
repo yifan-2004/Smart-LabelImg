@@ -301,3 +301,22 @@ def test_dataset_switch_waits_for_an_inflight_save(tmp_path: Path, monkeypatch):
     assert (first / "frame.txt").exists()
     assert not (second / "frame.txt").exists()
     assert service.dataset_path == second.resolve()
+
+
+def test_external_symlink_is_ignored_while_valid_images_still_open(tmp_path):
+    dataset = tmp_path / 'dataset'
+    dataset.mkdir()
+    _write_image(dataset / 'inside.png')
+    _write_image(tmp_path / 'outside.png')
+    (dataset / 'linked.png').symlink_to(tmp_path / 'outside.png')
+    client = TestClient(create_app(initial_dataset=dataset))
+    assert client.get('/api/dataset').json()['images'] == ['inside.png']
+
+
+def test_cross_origin_and_untrusted_host_cannot_access_local_dataset(tmp_path):
+    _write_image(tmp_path / 'frame.png')
+    client = TestClient(create_app(initial_dataset=tmp_path))
+    assert client.get('/api/dataset', headers={'Origin': 'https://unrelated.example'}).status_code == 403
+    assert client.post('/api/dataset/open', json={'path': str(tmp_path)}, headers={'Origin': 'null'}).status_code == 403
+    assert client.get('/api/dataset', headers={'Host': 'unrelated.example'}).status_code == 400
+    assert client.get('/api/dataset', headers={'Origin': 'http://testserver'}).status_code == 200
